@@ -1,4 +1,5 @@
 import torch
+import matplotlib.pyplot as plt
 
 # Make more, makes more of things that you give it. We will be working with a large dataset of names and building a language model which can make unique names.
 # Under the hood, make-more is a character level language model. It is treating every line like an example and within each example its treating them all as sequences of individual characters.
@@ -68,3 +69,17 @@ for w in words:
         ix1 = stoi[ch1]
         ix2 = stoi[ch2]
         N[ix1, ix2] += 1
+
+# first thing we need to do before visualising the data is invert the array above
+itos = {i:s for s, i in stoi.items()}
+
+# for visualizing in a jupyter notebook
+plt.figure(figsize=(16, 16))
+plt.imshow(N, cmap='Blues')
+for i in range(28):
+    for j in range(28):
+        chstr = itos[i] + itos[j]
+        plt.text(j, i, chstr, ha="center", va="bottom", color='gray')
+        plt.text(j, i, N[i, j].item(), ha="center", va="top", color='gray')
+plt.axis('off');
+
