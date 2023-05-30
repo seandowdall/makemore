@@ -113,19 +113,26 @@ print(p)  # OUTPUT: tensor([0.0000, 0.1377, 0.0408, 0.0481, 0.0528, 0.0478, 0.01
 # print(p)
 # torch.multinomial(p, num_samples=100, replacement=True, generator=g)
 
+
+# grab floating point value of N
+P = N.float()
+# then we want to divide all rows so that they sum to 1
+P = P / P.sum(1, keepdim=True).shape
+
 g = torch.Generator().manual_seed(2147483647)
 
+# we are going to have to get very good at tensor manipulations moving forward
 for i in range(50):
 
     out = []
     ix = 0
     while True:
-        p = N[ix].float()
-        p = p / p.sum()
+        p = P[ix]
+        # p = N[ix].float()
+        # p = p / p.sum()
         # p = torch.ones(27)/27
         ix = torch.multinomial(p, num_samples=1, replacement=True, generator=g).item()
         out.append((itos[ix]))
         if ix == 0:
             break
     print(''.join(out))
-
