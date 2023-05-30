@@ -104,9 +104,28 @@ print(p)  # OUTPUT: tensor([0.0000, 0.1377, 0.0408, 0.0481, 0.0528, 0.0478, 0.01
 # now we can try to sample from these distributions
 # we will use torch.multinomial - returns samples from the multinomial probability distributions
 # in other words: you give me probabilities, I give you integers which are sampled according to the probability distribution
-g = torch.Generator().manual_seed(214783647)
-p = torch.rand(3, generator=g)
-p = p / p.sum()
-print(p)
+#
+# g = torch.Generator().manual_seed(214783647)
+# ix = torch.multinomial(p, num_samples=1, replacement=True, generator=g).item()
+# itos[ix]
+# p = torch.rand(3, generator=g)
+# p = p / p.sum()
+# print(p)
+# torch.multinomial(p, num_samples=100, replacement=True, generator=g)
 
-torch.multinomial(p, num_samples=20, replacement=True, generator=g)
+g = torch.Generator().manual_seed(2147483647)
+
+for i in range(50):
+
+    out = []
+    ix = 0
+    while True:
+        p = N[ix].float()
+        p = p / p.sum()
+        # p = torch.ones(27)/27
+        ix = torch.multinomial(p, num_samples=1, replacement=True, generator=g).item()
+        out.append((itos[ix]))
+        if ix == 0:
+            break
+    print(''.join(out))
+
