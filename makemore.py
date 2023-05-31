@@ -57,7 +57,7 @@ b = {}  # dictionary 'b' to maintain counts for every one of the bigrams
 # each 'w' here is an individual word (a string)
 for w in words:
     chs = ['<S>'] + list(w) + ['<E>']
-# created a special array here (characters), hallucinated a special start token + 'W' (string 'emma') + end special token
+    # created a special array here (characters), hallucinated a special start token + 'W' (string 'emma') + end special token
     for ch1, ch2 in zip(chs, chs[1:]):  # iterate through the words
         bigram = (ch1, ch2)
         b[bigram] = b.get(bigram, 0) + 1  # add up all bigrams and count how often they will occur
@@ -84,7 +84,8 @@ for w in words:
 # tensors allow us to manipulate all the individual entries very efficiently
 
 N = torch.zeros((27, 27), dtype=torch.int32)  # 27 * 27 array of zeros, N represents counts here
-chars = sorted(list(set(''.join(words))))  # ''.join(words) --> concatenate all words and makes them one massive string - pass to set constructor, throws out all duplicate characters - list sorted from a-z
+chars = sorted(list(set(''.join(
+    words))))  # ''.join(words) --> concatenate all words and makes them one massive string - pass to set constructor, throws out all duplicate characters - list sorted from a-z
 stoi = {s: i + 1 for i, s in enumerate(chars)}  # now a starts at 1 'a': 1,'b': 2 ........'z':26, '.':0
 stoi['.'] = 0  # only one special token now - has position 0
 # first thing we need to do before visualising the data is invert the array above
@@ -151,21 +152,32 @@ p = p / p.sum()
 # grab floating point value of N
 P = N.float()
 # then we want to divide all rows so that they sum to 1
-P = P / P.sum(1, keepdim=True)
+P /= P.sum(1, keepdim=True)  # (keepdim = true makes this work, without is a bug)
 
 g = torch.Generator().manual_seed(2147483647)
 # we are going to have to get very good at tensor manipulations moving forward
-for i in range(50):
+for i in range(5):
 
     out = []
     ix = 0
     while True:
         p = P[ix]
-        # p = N[ix].float()
-        # p = p / p.sum()
-        # p = torch.ones(27)/27
         ix = torch.multinomial(p, num_samples=1, replacement=True, generator=g).item()
         out.append((itos[ix]))
         if ix == 0:
             break
     print(''.join(out))
+
+# we are in a good spot at this point.
+# We have trained a bigram model by counting how frequently any pairing occurs and
+# normalising, so we have a nice probability distribution
+
+# now we have to summarise the quality of this model into a singkle number (how good it is at predicting)
+for w in words[:3]:
+    chs = ['.'] + list(w) + [
+        '.']  # created a special array here (characters), hallucinated a special start token + 'W' (string 'emma') + end special token
+    for ch1, ch2 in zip(chs, chs[1:]):
+        ix1 = stoi[ch1]
+        ix2 = stoi[ch2]
+        prob = P[ix1, ix2]
+        print(f'{ch1}{ch2} : {prob:.4f}')
