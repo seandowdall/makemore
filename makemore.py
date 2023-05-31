@@ -150,7 +150,8 @@ p = p / p.sum()
 # lots of zeros, 2 times as few ones and 3 times as few twos
 
 # grab floating point value of N
-P = (N+1).float()  # HERE WE ADD 1 TO N TO PREVENT THE INFINITE PROBLEM OF THE PROBABILTY OF 'jq' as there previously was 0 jq's in our model
+P = (
+            N + 1).float()  # HERE WE ADD 1 TO N TO PREVENT THE INFINITE PROBLEM OF THE PROBABILTY OF 'jq' as there previously was 0 jq's in our model
 # then we want to divide all rows so that they sum to 1
 P /= P.sum(1, keepdim=True)  # (keepdim = true makes this work, without is a bug)
 
@@ -186,11 +187,11 @@ for w in words:
         logprob = torch.log(prob)
         log_likelihood += logprob
         n += 1
-        print(f'{ch1}{ch2} : {prob:.4f} {logprob:.4f}')
-print(f'{log_likelihood=}')
+        # print(f'{ch1}{ch2} : {prob:.4f} {logprob:.4f}')
+# print(f'{log_likelihood=}')
 nll = -log_likelihood
-print(f'{nll=}')
-print(f'{nll / n}')
+# print(f'{nll=}')
+# print(f'{nll / n}')
 #    what are we looking at here: probabilities that model assigns to every one of the bigrams presented here
 # we see some are 4% 3% etc. We have 27 possible tokens. If everything was equally likley we would expect the probabilities to
 # be 4% roughly. Anything above 4% means we have learned something useful. You can see that some of ours are 30%, 40%
@@ -243,3 +244,29 @@ print(f'{nll / n}')
 #  equivalent to minimizing the average negative log likelihood
 #  log(a*b*c) = log(a) + log(b) + log(c)
 # this summarizes the quality of your model - you want to get as close to zero as possible (lowest is ZERO (0))
+
+# PART 2 ------------------------------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# -------------------------------------------------------------------------------------------------------------------
+# now we are going to take an alternative approach: We will end up in a similar position
+# cast problem of bigram character level language modelling into the neural network framework
+# our NN is still going to be a bigram character level language model - will still make guesses as to whihc character will follow the current
+# we also will be able to evaluate any setting of the parameters of the nueral net because we have the loss function (negative log likelihood)
+# we are going to take a look at prob distributions and take the labels
+
+# we have the loss function, and we will minimize it -> in other words -- increase the probability that our model is correct
+# tune the weights so the neural nets correctly predict probabilities for the next character
+
+# create the training set of bigrams
+# this code iterates over all the bigrams (x, y)
+xs, ys = [], []
+
+for w in words[:1]:
+    chs = ['.'] + list(w) + ['.']
+    for ch1, ch2 in zip(chs, chs[1:]):
+        ix1 = stoi[ch1]
+        ix2 = stoi[ch2]
+        xs.append(ix1)
+        ys.append(ix2)
+xs = torch.tensor(xs)
+xy = torch.tensor(ys)
+
