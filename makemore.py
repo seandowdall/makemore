@@ -150,12 +150,13 @@ p = p / p.sum()
 # lots of zeros, 2 times as few ones and 3 times as few twos
 
 # grab floating point value of N
-P = N.float()
+P = (N+1).float()  # HERE WE ADD 1 TO N TO PREVENT THE INFINITE PROBLEM OF THE PROBABILTY OF 'jq' as there previously was 0 jq's in our model
 # then we want to divide all rows so that they sum to 1
 P /= P.sum(1, keepdim=True)  # (keepdim = true makes this work, without is a bug)
 
 g = torch.Generator().manual_seed(2147483647)
 # we are going to have to get very good at tensor manipulations moving forward
+# here the model is already trained, and we are just sampling from it
 for i in range(5):
 
     out = []
@@ -166,18 +167,79 @@ for i in range(5):
         out.append((itos[ix]))
         if ix == 0:
             break
-    print(''.join(out))
+    # print(''.join(out))
 
 # we are in a good spot at this point.
 # We have trained a bigram model by counting how frequently any pairing occurs and
 # normalising, so we have a nice probability distribution
 
-# now we have to summarise the quality of this model into a singkle number (how good it is at predicting)
-for w in words[:3]:
-    chs = ['.'] + list(w) + [
-        '.']  # created a special array here (characters), hallucinated a special start token + 'W' (string 'emma') + end special token
+# Evaluate the quality now: now we have to summarise the quality of this model into a single number (how good it is at predicting)
+log_likelihood = 0.0
+n = 0
+# you can test the likelihood of any individual word also: for w in ["andrej"]: ----> output 3.039065 (quite unlikely)
+for w in words:
+    chs = ['.'] + list(w) + ['.']
     for ch1, ch2 in zip(chs, chs[1:]):
         ix1 = stoi[ch1]
         ix2 = stoi[ch2]
         prob = P[ix1, ix2]
-        print(f'{ch1}{ch2} : {prob:.4f}')
+        logprob = torch.log(prob)
+        log_likelihood += logprob
+        n += 1
+        print(f'{ch1}{ch2} : {prob:.4f} {logprob:.4f}')
+print(f'{log_likelihood=}')
+nll = -log_likelihood
+print(f'{nll=}')
+print(f'{nll / n}')
+#    what are we looking at here: probabilities that model assigns to every one of the bigrams presented here
+# we see some are 4% 3% etc. We have 27 possible tokens. If everything was equally likley we would expect the probabilities to
+# be 4% roughly. Anything above 4% means we have learned something useful. You can see that some of ours are 30%, 40%
+# with a very good model you would expect the probabilities to be close to 1.
+#  -------------------------
+# output:
+# .e : 0.0478
+# em : 0.0377
+# mm : 0.0253
+# ma : 0.3899
+# a. : 0.1960
+# .o : 0.0123
+# ol : 0.0780
+# li : 0.1777
+# iv : 0.0152
+# vi : 0.3541
+# ia : 0.1381
+# a. : 0.1960
+# .a : 0.1377
+# av : 0.0246
+# va : 0.2495
+# a. : 0.1960
+
+# the product of all these probabilities should be as high as possible (likelihood)
+# for convenience we will work with log likelihood
+
+# .e : 0.0478 -3.0408
+# em : 0.0377 -3.2793
+# mm : 0.0253 -3.6772
+# ma : 0.3899 -0.9418
+# a. : 0.1960 -1.6299
+# .o : 0.0123 -4.3982
+# ol : 0.0780 -2.5508
+# li : 0.1777 -1.7278
+# iv : 0.0152 -4.1867
+# vi : 0.3541 -1.0383
+# ia : 0.1381 -1.9796
+# a. : 0.1960 -1.6299
+# .a : 0.1377 -1.9829
+# av : 0.0246 -3.7045
+# va : 0.2495 -1.3882
+# a. : 0.1960 -1.6299
+# log_likelihood=tensor(-38.7856)
+# nll=tensor(38.7856)
+# 2.424102306365967 - average log likelihood (QUALITY OF THIS MODEL, LOWER IT IS THE BETTER OFF WE ARE)
+#
+# GOAL: maximize likelihood of the data w.r.t. model parameters (statistical modeling)
+# equivalent to maximizing the log likelihood (because log is monotonic)
+#  equivalent to minimizing the negative log likelihood
+#  equivalent to minimizing the average negative log likelihood
+#  log(a*b*c) = log(a) + log(b) + log(c)
+# this summarizes the quality of your model - you want to get as close to zero as possible (lowest is ZERO (0))
